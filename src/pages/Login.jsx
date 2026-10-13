@@ -11,6 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   if (!loading && session) {
     const from = location.state?.from?.pathname || '/'
@@ -20,12 +21,31 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    if (!password) {
+      setError('חסרה סיסמה')
+      return
+    }
     setSubmitting(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setSubmitting(false)
     if (error) {
       setError('אימייל או סיסמה שגויים')
     }
+  }
+
+  async function handleForgot() {
+    setError('')
+    if (!email) {
+      setError('כתבי קודם את האימייל, ואז לחצי על "שכחתי סיסמה"')
+      return
+    }
+    setSubmitting(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href.split('#')[0],
+    })
+    setSubmitting(false)
+    if (error) setError('שליחת המייל נכשלה, נסי שוב בעוד דקה')
+    else setResetSent(true)
   }
 
   return (
@@ -52,17 +72,25 @@ export default function Login() {
             <input
               id="password"
               type="password"
-              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
             />
           </div>
           {error && <p style={{ color: 'var(--color-danger)' }}>{error}</p>}
+          {resetSent && <p>שלחנו לך מייל עם לינק לבחירת סיסמה חדשה ✉️</p>}
           <button className="btn btn-primary" type="submit" disabled={submitting} style={{ width: '100%' }}>
             {submitting ? 'מתחברת...' : 'כניסה'}
           </button>
         </form>
+        <button
+          type="button"
+          onClick={handleForgot}
+          disabled={submitting}
+          style={{ background: 'none', border: 0, color: 'var(--color-blue)', marginTop: '1em', width: '100%' }}
+        >
+          שכחתי סיסמה
+        </button>
       </div>
     </div>
   )

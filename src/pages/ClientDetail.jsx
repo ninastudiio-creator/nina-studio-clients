@@ -140,7 +140,7 @@ export default function ClientDetail() {
 
   return (
     <AdminLayout>
-      <Link to="/" style={{ fontSize: '0.9rem' }}>
+      <Link to="/websites" style={{ fontSize: '0.9rem' }}>
         ← חזרה ללקוחות שלי
       </Link>
 

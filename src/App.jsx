@@ -8,16 +8,36 @@ import SurveyEditor from './pages/SurveyEditor'
 import SurveyResponses from './pages/SurveyResponses'
 import DocumentEditor from './pages/DocumentEditor'
 import PublicSurvey from './pages/PublicSurvey'
+import SetPassword from './pages/SetPassword'
+import Today from './crm/Today'
+import Orders from './crm/Orders'
+import Clients from './crm/Clients'
+import ClientFile from './crm/ClientFile'
+import Review from './crm/Review'
+
+const crmRoutes = [
+  ['/crm', Today],
+  ['/crm/orders', Orders],
+  ['/crm/clients', Clients],
+  ['/crm/clients/:clientId', ClientFile],
+  ['/crm/review', Review],
+]
 
 export default function App() {
   return (
     <HashRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/set-password" element={<ProtectedRoute><SetPassword /></ProtectedRoute>} />
         <Route path="/survey/:token" element={<PublicSurvey />} />
 
+        <Route path="/" element={<Navigate to="/crm" replace />} />
+        {crmRoutes.map(([path, Page]) => (
+          <Route key={path} path={path} element={<ProtectedRoute><Page /></ProtectedRoute>} />
+        ))}
+
         <Route
-          path="/"
+          path="/websites"
           element={
             <ProtectedRoute>
               <ClientsList />

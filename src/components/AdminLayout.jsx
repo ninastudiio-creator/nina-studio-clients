@@ -17,12 +17,15 @@ export default function AdminLayout({ children }) {
         background: 'var(--color-white)',
         borderBottom: '1px solid var(--color-border)',
       }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link to="/websites" style={{ display: 'flex', alignItems: 'center' }}>
           <img src={logo} alt="Nina Studio" className="logo-header" />
         </Link>
-        <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
-          התנתקות
-        </button>
+        <div style={{ display: 'flex', gap: '0.5em' }}>
+          <Link to="/crm" className="btn btn-ghost btn-sm">לקוחות אלבומים</Link>
+          <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
+            התנתקות
+          </button>
+        </div>
       </header>
       <main className="container">{children}</main>
     </div>
