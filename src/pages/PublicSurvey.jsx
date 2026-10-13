@@ -18,6 +18,11 @@ export default function PublicSurvey() {
   const hideTimer = useRef(null)
   const latestAnswers = useRef({})
 
+  // Clients see the questionnaire name in their tab, not the admin CRM name.
+  useEffect(() => {
+    document.title = 'שאלון אפיון | Nina Studio'
+  }, [])
+
   useEffect(() => {
     async function load() {
       const { data: surveyRows, error: surveyError } = await supabase.rpc('get_survey_by_token', {
