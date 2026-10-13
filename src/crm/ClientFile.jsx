@@ -255,7 +255,7 @@ function MergeBox({ client, onMerged }) {
   )
 }
 
-const EVENT_ICONS = { stage_change: '➡️', note: '📝', whatsapp_out: '💬', whatsapp_in: '💬', email: '✉️', payment: '💳' }
+const EVENT_ICONS = { order_created: '🛒', stage_change: '➡️', note: '📝', whatsapp_out: '💬', whatsapp_in: '💬', email: '✉️', payment: '💳' }
 
 export default function ClientFile() {
   const { clientId } = useParams()
