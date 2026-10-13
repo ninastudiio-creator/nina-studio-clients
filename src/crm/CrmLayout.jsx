@@ -25,6 +25,8 @@ export default function CrmLayout({ children }) {
           הזמנות {counts.open > 0 && <span className="count">{counts.open}</span>}
         </NavLink>
         <NavLink to="/crm/clients">לקוחות</NavLink>
+        <NavLink to="/crm/leads">לידים</NavLink>
+        <NavLink to="/crm/data">נתונים</NavLink>
         <NavLink to="/crm/review">
           לבדיקה {counts.review > 0 && <span className="count">{counts.review}</span>}
         </NavLink>

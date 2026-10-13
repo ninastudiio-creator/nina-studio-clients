@@ -33,6 +33,7 @@ export default function Today() {
   const stages = useStages()
   const [orders, setOrders] = useState(null)
   const [reviewCount, setReviewCount] = useState(0)
+  const [leads, setLeads] = useState([])
 
   useEffect(() => {
     supabase
@@ -45,6 +46,11 @@ export default function Today() {
       .select('id', { count: 'exact', head: true })
       .eq('needs_review', true)
       .then(({ count }) => setReviewCount(count || 0))
+    supabase
+      .from('leads')
+      .select('id, name, phone, stage, stage_since, last_contact_at')
+      .in('stage', ['new', 'talking', 'offer_sent'])
+      .then(({ data }) => setLeads(data || []))
   }, [])
 
   const now = new Date()
@@ -59,6 +65,8 @@ export default function Today() {
   const stuckAtClient = atClient.filter((o) => isLate(stages, o)).sort(byAge)
   const printing = loading ? [] : orders.filter((o) => o.stage === 'printing' || o.stage === 'shipping')
   const stuckPrinting = printing.filter((o) => isLate(stages, o)).sort(byAge)
+  const LEAD_LATE = { new: 1, talking: 5, offer_sent: 4 }
+  const followUps = leads.filter((l) => daysSince(l.last_contact_at || l.stage_since) > LEAD_LATE[l.stage])
   const recent = loading ? [] : orders.filter((o) => daysSince(o.created_at) <= 2 && !o.legacy_ref)
 
   return (
@@ -98,6 +106,18 @@ export default function Today() {
               {stuckAtClient.length === 0 && <p className="muted">אף אחת לא נתקעה.</p>}
               {stuckAtClient.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
             </div>
+
+            {followUps.length > 0 && (
+              <div className="card accent-client">
+                <h3>💬 לידים שמחכים לפולואפ ({followUps.length})</h3>
+                {followUps.map((l) => (
+                  <Link key={l.id} to="/crm/leads" className="list-row">
+                    <div className="name">{l.name || l.phone}</div>
+                    <div className="days late">{daysText(daysSince(l.last_contact_at || l.stage_since))}</div>
+                  </Link>
+                ))}
+              </div>
+            )}
 
             {(stuckPrinting.length > 0 || reviewCount > 0) && (
               <div className="card accent-alert">

@@ -14,6 +14,8 @@ import Orders from './crm/Orders'
 import Clients from './crm/Clients'
 import ClientFile from './crm/ClientFile'
 import Review from './crm/Review'
+import Leads from './crm/Leads'
+import Data from './crm/Data'
 
 const crmRoutes = [
   ['/crm', Today],
@@ -21,6 +23,8 @@ const crmRoutes = [
   ['/crm/clients', Clients],
   ['/crm/clients/:clientId', ClientFile],
   ['/crm/review', Review],
+  ['/crm/leads', Leads],
+  ['/crm/data', Data],
 ]
 
 export default function App() {
