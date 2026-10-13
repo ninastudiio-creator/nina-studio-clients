@@ -51,6 +51,7 @@ export default function ClientsList() {
     const { data, error } = await supabase
       .from('clients')
       .select('id, name, created_at, surveys(id, public_token, responses(updated_at))')
+      .contains('lines', ['website'])
       .order('created_at', { ascending: false })
 
     if (error) {

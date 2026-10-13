@@ -23,3 +23,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local CRM mockups (contain client names)
+docs/*mockup*.html
