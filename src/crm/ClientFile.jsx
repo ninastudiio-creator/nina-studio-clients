@@ -151,7 +151,7 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           {hasVat && <span className="calc-num">{amount(order.price == null ? null : order.price / vat)}</span>}
 
           <span className="calc-label">
-            מחיר לי (הדפסה)
+            מחיר הדפסה
             <small>
               {order.print_cost != null && !hasVat ? (
                 'מהשיטס'
@@ -176,6 +176,8 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           </span>
           <span><input type="number" value={withVat(order.shipping_cost) ?? ''} onChange={(e) => setCost('shipping_cost', e.target.value)} placeholder="0" /></span>
           {hasVat && <span className="calc-num">{amount(order.shipping_cost)}</span>}
+
+          <span className="calc-divider" />
 
           <span className="calc-label calc-total">
             רווח נטו

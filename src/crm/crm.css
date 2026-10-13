@@ -603,9 +603,15 @@ details.card.more {
 }
 
 .calc-total {
-  border-top: 1px solid var(--color-border);
-  padding-top: 10px;
   font-weight: 700;
+}
+
+/* One continuous line across all columns, above the profit row */
+.calc-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
 }
 
 .calc-num.profit {
