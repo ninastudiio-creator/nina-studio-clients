@@ -477,3 +477,34 @@
   .crm-main { padding: 18px 16px 60px; }
   .file-layout { grid-template-columns: 1fr; }
 }
+
+/* Today: equal cards, lists scroll inside */
+.today-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.today-card {
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.today-card h3 {
+  flex: none;
+}
+
+.today-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -8px;
+  padding: 0 8px;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 900px) {
+  .today-card { height: 320px; }
+}

@@ -29,6 +29,16 @@ function OrderRow({ order, stages, showStage = true }) {
   )
 }
 
+// All cards share one height; long lists scroll inside the card.
+function TodayCard({ accent, title, children }) {
+  return (
+    <div className={`card today-card accent-${accent}`}>
+      <h3>{title}</h3>
+      <div className="today-card-body">{children}</div>
+    </div>
+  )
+}
+
 export default function Today() {
   const stages = useStages()
   const [orders, setOrders] = useState(null)
@@ -87,41 +97,36 @@ export default function Today() {
             <div className="kpi"><b>{orders.length}</b><span>הזמנות פתוחות</span></div>
           </div>
 
-          <div className="crm-grid">
+          <div className="today-grid">
             {waitingPrint.length > 0 && (
-              <div className="card accent-me">
-                <h3>🖨️ מאושרות, מחכות שתשלחי לדפוס ({waitingPrint.length})</h3>
+              <TodayCard accent="me" title={`🖨️ מאושרות, מחכות שתשלחי לדפוס (${waitingPrint.length})`}>
                 {waitingPrint.map((o) => <OrderRow key={o.id} order={o} stages={stages} showStage={false} />)}
-              </div>
+              </TodayCard>
             )}
 
-            <div className="card accent-me">
-              <h3>🔵 מחכה לך ({mineOther.length})</h3>
+            <TodayCard accent="me" title={`🔵 מחכה לך (${mineOther.length})`}>
               {mineOther.length === 0 && <p className="muted">אין כלום. כל הכבוד 🎉</p>}
               {mineOther.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
-            </div>
+            </TodayCard>
 
-            <div className="card accent-client">
-              <h3>🟡 נתקעו אצל הלקוחה ({stuckAtClient.length})</h3>
+            <TodayCard accent="client" title={`🟡 נתקעו אצל הלקוחה (${stuckAtClient.length})`}>
               {stuckAtClient.length === 0 && <p className="muted">אף אחת לא נתקעה.</p>}
               {stuckAtClient.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
-            </div>
+            </TodayCard>
 
             {followUps.length > 0 && (
-              <div className="card accent-client">
-                <h3>💬 לידים שמחכים לפולואפ ({followUps.length})</h3>
+              <TodayCard accent="client" title={`💬 לידים שמחכים לפולואפ (${followUps.length})`}>
                 {followUps.map((l) => (
                   <Link key={l.id} to="/crm/leads" className="list-row">
                     <div className="name">{l.name || l.phone}</div>
                     <div className="days late">{daysText(daysSince(l.last_contact_at || l.stage_since))}</div>
                   </Link>
                 ))}
-              </div>
+              </TodayCard>
             )}
 
             {(stuckPrinting.length > 0 || reviewCount > 0) && (
-              <div className="card accent-alert">
-                <h3>⚠️ כדאי לבדוק</h3>
+              <TodayCard accent="alert" title="⚠️ כדאי לבדוק">
                 {stuckPrinting.length > 0 && (
                   <Link to="/crm/orders?stage=printing" className="list-row">
                     <div>
@@ -138,14 +143,13 @@ export default function Today() {
                     </div>
                   </Link>
                 )}
-              </div>
+              </TodayCard>
             )}
 
             {recent.length > 0 && (
-              <div className="card accent-done">
-                <h3>🆕 נכנסו ביומיים האחרונים</h3>
+              <TodayCard accent="done" title={`🆕 נכנסו ביומיים האחרונים (${recent.length})`}>
                 {recent.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
-              </div>
+              </TodayCard>
             )}
           </div>
         </>
