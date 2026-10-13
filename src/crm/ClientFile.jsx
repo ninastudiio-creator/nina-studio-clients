@@ -39,7 +39,7 @@ function SaveState({ state }) {
 
 function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
   const [order, setOrder] = useState(initial)
-  const [save, saveState] = useAutosave('orders', initial.id, (row) => setOrder((o) => ({ ...o, profit: row.profit })))
+  const [save, saveState] = useAutosave('orders', initial.id, (row) => setOrder((o) => ({ ...o, profit: row.profit, print_cost_auto: row.print_cost_auto })))
   const stage = stageOf(stages, order.stage)
   const next = nextStage(stages, order)
 
@@ -153,7 +153,19 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           <input type="text" value={order.paid_via} onChange={(e) => set('paid_via', e.target.value)} />
         </label>
         <label>עלות הדפסה (לפני מע"מ)
-          <input type="number" value={order.print_cost ?? ''} onChange={(e) => set('print_cost', e.target.value)} />
+          <input
+            type="number"
+            value={order.print_cost ?? ''}
+            placeholder={order.print_cost_auto != null ? `${order.print_cost_auto} (אוטומטי)` : 'לפי מספר העמודים'}
+            onChange={(e) => set('print_cost', e.target.value)}
+          />
+          <span style={{ fontSize: '0.75rem' }}>
+            {order.print_cost != null
+              ? 'סכום ידני. למחוק כדי לחזור לחישוב לפי עמודים'
+              : order.print_cost_auto != null
+                ? `מחושב לפי ${order.pages} עמודים, כמו בשיטס`
+                : 'יחושב לבד כשיהיה מספר עמודים'}
+          </span>
         </label>
         <label>עלות משלוח עליי
           <input type="number" value={order.shipping_cost ?? ''} onChange={(e) => set('shipping_cost', e.target.value)} />
@@ -165,7 +177,10 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           </select>
         </label>
         <label>רווח נטו
-          <b style={{ fontSize: '1.1rem', color: 'var(--color-navy)' }}>{money(order.profit)}</b>
+          <b style={{ fontSize: '1.1rem', color: 'var(--color-navy)' }}>
+            {order.profit != null ? money(order.profit) : order.price == null ? 'חסר מחיר' : 'חסר מספר עמודים'}
+          </b>
+          {order.profit != null && <span style={{ fontSize: '0.75rem' }}>אחרי מע"מ, הדפסה ומשלוח</span>}
         </label>
         <label className="check"><input type="checkbox" checked={order.receipt} onChange={(e) => set('receipt', e.target.checked)} /> קבלה הוצאה</label>
         <label className="check"><input type="checkbox" checked={order.print_paid} onChange={(e) => set('print_paid', e.target.checked)} /> שולם לדפוס</label>

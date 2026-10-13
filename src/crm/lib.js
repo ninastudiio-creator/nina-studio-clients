@@ -21,7 +21,7 @@ export const FLAGS = { repair: 'תיקון בדפוס', hold: 'בהולד' }
 export const DELIVERY = { direct: 'ישיר מהדפוס', via_me: 'דרכי', pickup: 'איסוף' }
 
 export const ORDER_FIELDS =
-  'id, client_id, product, product_name, topic, size, pages, ordered_at, stage, stage_since, flag, delivery, address, price, vat_rate, paid_via, receipt, print_cost, print_paid, shipping_cost, profit, wix_order_number, diprint_order_number, drive_folder_url, notes, needs_review, review_note, legacy_ref, created_at'
+  'id, client_id, product, product_name, topic, size, pages, ordered_at, stage, stage_since, flag, delivery, address, price, vat_rate, paid_via, receipt, print_cost, print_cost_auto, print_paid, shipping_cost, profit, wix_order_number, diprint_order_number, drive_folder_url, notes, needs_review, review_note, legacy_ref, created_at'
 
 // Stages rarely change, so they are loaded once per page load.
 let stagesPromise = null

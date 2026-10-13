@@ -137,6 +137,7 @@ export default function Data() {
       inYear, months, products, unknown, repeat, clients, best,
       revenue: sum(inYear, 'price'),
       profit: sum(inYear, 'profit'),
+      noProfit: inYear.filter((o) => o.price != null && o.profit == null).length,
       lastRevenue: sum(lastYear, 'price'),
       lastCount: lastYear.length,
       cutoff,
@@ -175,7 +176,10 @@ export default function Data() {
                 {delta(view.revenue, view.lastRevenue) !== null && ` · ${delta(view.revenue, view.lastRevenue) > 0 ? '+' : ''}${delta(view.revenue, view.lastRevenue)}% מול ${year - 1}`}
               </span>
             </div>
-            <div className="kpi"><b>{money(view.profit)}</b><span>רווח נטו</span></div>
+            <div className="kpi">
+              <b>{money(view.profit)}</b>
+              <span>רווח נטו{view.noProfit > 0 && ` · בלי ${view.noProfit} הזמנות שחסרים בהן עמודים`}</span>
+            </div>
             <div className="kpi"><b>{money(view.inYear.length ? view.revenue / view.inYear.length : 0)}</b><span>ממוצע להזמנה</span></div>
           </div>
           {view.cutoff !== '12-31' && view.lastCount > 0 && (

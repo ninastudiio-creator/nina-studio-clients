@@ -18,7 +18,7 @@ export default function Orders() {
   const owner = params.get('owner') || 'all'
   const product = params.get('product') || 'all'
   const stageFilter = params.get('stage') || ''
-  const mode = params.get('mode') || (stageFilter ? 'table' : 'board')
+  const mode = params.get('mode') || 'table'
   const showClosed = params.get('closed') === '1'
   const [query, setQuery] = useState('')
 
@@ -93,7 +93,7 @@ export default function Orders() {
       </p>
 
       <div className="toolbar">
-        <input type="search" className="search" placeholder="🔍 חיפוש לפי שם, טלפון או הערה" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <input type="search" className="search" placeholder="🔍 חיפוש לפי שם או טלפון" value={query} onChange={(e) => setQuery(e.target.value)} />
         {['all', 'me', 'client', 'neutral'].map((k) => (
           <button key={k} className={`chip ${owner === k ? 'on' : ''}`} onClick={() => setParam('owner', k)}>
             {k === 'all' ? 'הכול' : OWNERS[k]}
@@ -112,8 +112,8 @@ export default function Orders() {
           כולל סגורות
         </label>
         <span style={{ flex: 1 }} />
+        <button className={`chip ${mode === 'table' ? 'on' : ''}`} onClick={() => setParam('mode', null)}>טבלה</button>
         <button className={`chip ${mode === 'board' ? 'on' : ''}`} onClick={() => setParam('mode', 'board')}>לוח</button>
-        <button className={`chip ${mode === 'table' ? 'on' : ''}`} onClick={() => setParam('mode', 'table')}>טבלה</button>
       </div>
 
       {!ready && <p>טוען...</p>}
@@ -154,7 +154,7 @@ export default function Orders() {
                     onChange={(e) => setSelected(new Set(e.target.checked ? list.map((o) => o.id) : []))}
                   />
                 </th>
-                <th>לקוחה</th><th>מוצר</th><th>שלב</th><th>אצל מי</th><th>בשלב</th><th>הוזמן</th><th>מחיר</th><th>רווח</th><th>הערות</th>
+                <th>לקוחה</th><th>מוצר</th><th>שלב</th><th>אצל מי</th><th>בשלב</th><th>הוזמן</th><th>מחיר</th><th>רווח</th>
               </tr>
             </thead>
             <tbody>
@@ -177,8 +177,7 @@ export default function Orders() {
                     <td className={`days ${isLate(stages, o) ? 'late' : ''}`}>{daysText(daysSince(o.stage_since))}</td>
                     <td>{o.ordered_at ? new Date(o.ordered_at).toLocaleDateString('he-IL') : '-'}</td>
                     <td>{money(o.price)}</td>
-                    <td>{money(o.profit)}</td>
-                    <td className="muted" style={{ maxWidth: 220 }}>{o.notes}</td>
+                    <td>{o.profit != null ? money(o.profit) : <span className="muted">{o.price == null ? '-' : 'חסרים עמודים'}</span>}</td>
                   </tr>
                 )
               })}
