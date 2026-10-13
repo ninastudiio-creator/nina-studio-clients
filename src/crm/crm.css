@@ -578,3 +578,8 @@ details.card.more {
   .money-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .money-row .stat.profit { grid-column: 1 / -1; }
 }
+
+.money-row small {
+  font-size: 0.68rem;
+  opacity: 0.8;
+}

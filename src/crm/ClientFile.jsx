@@ -43,6 +43,15 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
   const stage = stageOf(stages, order.stage)
   const next = nextStage(stages, order)
 
+  // Costs are stored before VAT (like the sheet); on screen they're shown and typed including VAT.
+  const vat = 1 + Number(order.vat_rate || 0)
+  const withVat = (v) => (v == null ? null : Math.round(Number(v) * vat * 100) / 100)
+  function setCost(key, value) {
+    const v = value === '' ? null : Math.round((Number(value) / vat) * 100) / 100
+    setOrder((o) => ({ ...o, [key]: v }))
+    save({ [key]: key === 'shipping_cost' ? v ?? 0 : v })
+  }
+
   function set(key, value) {
     const v = NUMBER_FIELDS.includes(key) ? (value === '' ? null : Number(value)) : value
     setOrder((o) => ({ ...o, [key]: v }))
@@ -125,20 +134,20 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
         <label>עמודים
           <input type="number" value={order.pages ?? ''} onChange={(e) => set('pages', e.target.value)} />
         </label>
-        <label>מחיר ללקוחה
+        <label>מחיר ללקוחה <small>כולל מע"מ</small>
           <input type="number" value={order.price ?? ''} onChange={(e) => set('price', e.target.value)} />
         </label>
         <div className="stat">
-          <span>הדפסה</span>
-          <b>{printCost != null ? money(printCost) : '-'}</b>
+          <span>הדפסה <small>כולל מע"מ</small></span>
+          <b>{printCost != null ? money(withVat(printCost)) : '-'}</b>
           <small>{order.print_cost != null ? 'ידני' : order.print_cost_auto != null ? 'לפי עמודים' : ''}</small>
         </div>
         <div className="stat">
-          <span>משלוח</span>
-          <b>{money(order.shipping_cost)}</b>
+          <span>משלוח <small>כולל מע"מ</small></span>
+          <b>{money(withVat(order.shipping_cost))}</b>
         </div>
         <div className="stat profit">
-          <span>רווח נטו</span>
+          <span>רווח נטו <small>אחרי מע"מ</small></span>
           <b>{profitText}</b>
         </div>
       </div>
@@ -176,16 +185,16 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           <label>תאריך הזמנה
             <input type="date" value={order.ordered_at || ''} onChange={(e) => set('ordered_at', e.target.value || null)} />
           </label>
-          <label>עלות הדפסה ידנית (לפני מע"מ)
+          <label>עלות הדפסה ידנית (כולל מע"מ)
             <input
               type="number"
-              value={order.print_cost ?? ''}
-              placeholder={order.print_cost_auto != null ? `אוטומטי: ${order.print_cost_auto}` : 'ריק = לפי עמודים'}
-              onChange={(e) => set('print_cost', e.target.value)}
+              value={withVat(order.print_cost) ?? ''}
+              placeholder={order.print_cost_auto != null ? `אוטומטי: ${withVat(order.print_cost_auto)}` : 'ריק = לפי עמודים'}
+              onChange={(e) => setCost('print_cost', e.target.value)}
             />
           </label>
-          <label>עלות משלוח עליי (לפני מע"מ)
-            <input type="number" value={order.shipping_cost ?? ''} onChange={(e) => set('shipping_cost', e.target.value)} />
+          <label>עלות משלוח עליי (כולל מע"מ)
+            <input type="number" value={withVat(order.shipping_cost) ?? ''} onChange={(e) => setCost('shipping_cost', e.target.value)} />
           </label>
           <label>משלוח
             <select value={order.delivery || ''} onChange={(e) => set('delivery', e.target.value || null)}>
