@@ -25,7 +25,7 @@ function useAutosave(table, id, onSaved) {
       pending.current = {}
       const { data, error } = await supabase.from(table).update(toSave).eq('id', id).select().single()
       setState(error ? 'error' : 'saved')
-      if (!error && onSaved) onSaved(data)
+      if (!error && onSaved) onSaved(data, toSave)
     }, SAVE_DELAY)
   }
   useEffect(() => () => clearTimeout(timer.current), [])
@@ -37,9 +37,30 @@ function SaveState({ state }) {
   return text ? <span className="save-state">{text}</span> : null
 }
 
+// Money fields Hagar edits by hand are logged, so the agent knows not to overwrite them
+// (e.g. with numbers from a Diprint email) without asking.
+const TRACKED_FIELDS = { pages: 'מספר עמודים', price: 'מחיר ששולם', print_cost: 'מחיר הדפסה', shipping_cost: 'משלוח' }
+
+function logManualEdits(row, saved) {
+  const rows = Object.keys(saved)
+    .filter((k) => TRACKED_FIELDS[k])
+    .map((field) => ({
+      client_id: row.client_id,
+      order_id: row.id,
+      type: 'field_update',
+      text: `${TRACKED_FIELDS[field]}: ${saved[field] ?? 'ריק'}`,
+      data: { field, value: saved[field] },
+      actor: 'hagar',
+    }))
+  if (rows.length) supabase.from('events').insert(rows).then()
+}
+
 function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
   const [order, setOrder] = useState(initial)
-  const [save, saveState] = useAutosave('orders', initial.id, (row) => setOrder((o) => ({ ...o, profit: row.profit, print_cost_auto: row.print_cost_auto })))
+  const [save, saveState] = useAutosave('orders', initial.id, (row, saved) => {
+    setOrder((o) => ({ ...o, profit: row.profit, print_cost_auto: row.print_cost_auto }))
+    logManualEdits(row, saved)
+  })
   const stage = stageOf(stages, order.stage)
   const next = nextStage(stages, order)
 
