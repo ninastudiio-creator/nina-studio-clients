@@ -75,15 +75,15 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
   const currentIndex = path.findIndex((s) => s.key === order.stage)
   const late = isLate(stages, order)
 
+  const printCost = order.print_cost ?? order.print_cost_auto
+  const profitText = order.profit != null ? money(order.profit) : order.price == null ? 'חסר מחיר' : 'חסרים עמודים'
+
   return (
     <details className="card order-card" open={defaultOpen}>
       <summary>
         <div>
-          <div className="name">{productText(order)}</div>
-          <div className="muted">
-            הוזמן {dateText(order.ordered_at)} · {money(order.price)}
-            {order.legacy_ref && ` · מהשיטס (${order.legacy_ref.replace('!', ' שורה ')})`}
-          </div>
+          <div className="name">{productText(order)}{order.topic && <span className="muted"> · {order.topic}</span>}</div>
+          <div className="muted">הוזמן {dateText(order.ordered_at)}</div>
         </div>
         <div className="btn-row" style={{ alignItems: 'center' }}>
           {order.flag && <span className="pill flag">{FLAGS[order.flag]}</span>}
@@ -100,6 +100,7 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
         </div>
       )}
 
+      {/* 1. Where it stands */}
       <div className="steps">
         {path.map((s, i) => (
           <button
@@ -113,100 +114,114 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
         ))}
       </div>
       {next && order.stage !== 'closed' && (
-        <div className="btn-row" style={{ marginBottom: 14 }}>
+        <div className="btn-row" style={{ marginBottom: 16 }}>
           <button className="btn btn-primary btn-sm" onClick={() => moveTo(next.key)}>העבירי ל"{next.label}" ←</button>
-          {order.stage !== 'closed' && (
-            <button className="btn btn-ghost btn-sm" onClick={() => moveTo('closed')}>סגירה</button>
-          )}
+          <button className="btn btn-ghost btn-sm" onClick={() => moveTo('closed')}>סגירה</button>
         </div>
       )}
 
-      <div className="fields">
-        <label>מוצר
-          <select value={order.product || ''} onChange={(e) => set('product', e.target.value || null)}>
-            <option value="">לא ידוע</option>
-            {Object.entries(PRODUCTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </label>
-        <label>שם הטמפלט / פירוט
-          <input type="text" value={order.product_name} onChange={(e) => set('product_name', e.target.value)} />
-        </label>
-        <label>נושא האלבום
-          <input type="text" value={order.topic} onChange={(e) => set('topic', e.target.value)} />
-        </label>
-        <label>מצב מיוחד
-          <select value={order.flag || ''} onChange={(e) => set('flag', e.target.value || null)}>
-            <option value="">אין</option>
-            {Object.entries(FLAGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </label>
-        <label>תאריך הזמנה
-          <input type="date" value={order.ordered_at || ''} onChange={(e) => set('ordered_at', e.target.value || null)} />
-        </label>
+      {/* 2. The money, in one row */}
+      <div className="money-row">
         <label>עמודים
           <input type="number" value={order.pages ?? ''} onChange={(e) => set('pages', e.target.value)} />
         </label>
-        <label>מחיר ללקוחה (כולל מע"מ)
+        <label>מחיר ללקוחה
           <input type="number" value={order.price ?? ''} onChange={(e) => set('price', e.target.value)} />
         </label>
-        <label>איפה שולם
-          <input type="text" value={order.paid_via} onChange={(e) => set('paid_via', e.target.value)} />
-        </label>
-        <label>עלות הדפסה (לפני מע"מ)
-          <input
-            type="number"
-            value={order.print_cost ?? ''}
-            placeholder={order.print_cost_auto != null ? `${order.print_cost_auto} (אוטומטי)` : 'לפי מספר העמודים'}
-            onChange={(e) => set('print_cost', e.target.value)}
-          />
-          <span style={{ fontSize: '0.75rem' }}>
-            {order.print_cost != null
-              ? 'סכום ידני. למחוק כדי לחזור לחישוב לפי עמודים'
-              : order.print_cost_auto != null
-                ? `מחושב לפי ${order.pages} עמודים, כמו בשיטס`
-                : 'יחושב לבד כשיהיה מספר עמודים'}
+        <div className="stat">
+          <span>הדפסה</span>
+          <b>{printCost != null ? money(printCost) : '-'}</b>
+          <small>{order.print_cost != null ? 'ידני' : order.print_cost_auto != null ? 'לפי עמודים' : ''}</small>
+        </div>
+        <div className="stat">
+          <span>משלוח</span>
+          <b>{money(order.shipping_cost)}</b>
+        </div>
+        <div className="stat profit">
+          <span>רווח נטו</span>
+          <b>{profitText}</b>
+        </div>
+      </div>
+
+      {/* 3. Notes + links */}
+      <textarea rows={2} value={order.notes} onChange={(e) => set('notes', e.target.value)} placeholder="הערות להזמנה..." style={{ width: '100%', marginTop: 12 }} />
+      <div className="btn-row" style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+        <span className="btn-row" style={{ alignItems: 'center' }}>
+          {order.drive_folder_url && <a className="btn btn-secondary btn-sm" href={order.drive_folder_url} target="_blank" rel="noreferrer">📁 תיקייה בדרייב</a>}
+          <span className="muted">
+            {[order.wix_order_number && `וויקס #${order.wix_order_number}`, order.diprint_order_number && `דיפרינט #${order.diprint_order_number}`, order.delivery && DELIVERY[order.delivery]]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
-        </label>
-        <label>עלות משלוח עליי
-          <input type="number" value={order.shipping_cost ?? ''} onChange={(e) => set('shipping_cost', e.target.value)} />
-        </label>
-        <label>משלוח
-          <select value={order.delivery || ''} onChange={(e) => set('delivery', e.target.value || null)}>
-            <option value="">לא צוין</option>
-            {Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select>
-        </label>
-        <label>רווח נטו
-          <b style={{ fontSize: '1.1rem', color: 'var(--color-navy)' }}>
-            {order.profit != null ? money(order.profit) : order.price == null ? 'חסר מחיר' : 'חסר מספר עמודים'}
-          </b>
-          {order.profit != null && <span style={{ fontSize: '0.75rem' }}>אחרי מע"מ, הדפסה ומשלוח</span>}
-        </label>
-        <label className="check"><input type="checkbox" checked={order.receipt} onChange={(e) => set('receipt', e.target.checked)} /> קבלה הוצאה</label>
-        <label className="check"><input type="checkbox" checked={order.print_paid} onChange={(e) => set('print_paid', e.target.checked)} /> שולם לדפוס</label>
-        <label>הזמנה בוויקס
-          <input type="text" value={order.wix_order_number || ''} onChange={(e) => set('wix_order_number', e.target.value || null)} />
-        </label>
-        <label>הזמנה בדיפרינט
-          <input type="text" value={order.diprint_order_number || ''} onChange={(e) => set('diprint_order_number', e.target.value || null)} />
-        </label>
-        <label className="wide">תיקייה בדרייב
-          <input type="url" value={order.drive_folder_url} onChange={(e) => set('drive_folder_url', e.target.value)} placeholder="https://drive.google.com/..." />
-        </label>
-        <label className="wide">כתובת משלוח
-          <input type="text" value={order.address} onChange={(e) => set('address', e.target.value)} />
-        </label>
-        <label className="wide">הערות
-          <textarea rows={2} value={order.notes} onChange={(e) => set('notes', e.target.value)} />
-        </label>
-      </div>
-      <div className="btn-row" style={{ justifyContent: 'space-between', marginTop: 10 }}>
-        <SaveState state={saveState} />
-        <span className="btn-row">
-          {order.drive_folder_url && <a className="btn btn-ghost btn-sm" href={order.drive_folder_url} target="_blank" rel="noreferrer">📁 דרייב</a>}
-          <button className="btn btn-danger btn-sm" onClick={remove}>מחיקת הזמנה</button>
         </span>
+        <SaveState state={saveState} />
       </div>
+
+      {/* 4. Everything else, folded */}
+      <details className="more">
+        <summary>עוד פרטים</summary>
+        <div className="fields" style={{ marginTop: 12 }}>
+          <label>מוצר
+            <select value={order.product || ''} onChange={(e) => set('product', e.target.value || null)}>
+              <option value="">לא ידוע</option>
+              {Object.entries(PRODUCTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </label>
+          <label>שם הטמפלט / פירוט
+            <input type="text" value={order.product_name} onChange={(e) => set('product_name', e.target.value)} />
+          </label>
+          <label>נושא האלבום
+            <input type="text" value={order.topic} onChange={(e) => set('topic', e.target.value)} />
+          </label>
+          <label>תאריך הזמנה
+            <input type="date" value={order.ordered_at || ''} onChange={(e) => set('ordered_at', e.target.value || null)} />
+          </label>
+          <label>עלות הדפסה ידנית (לפני מע"מ)
+            <input
+              type="number"
+              value={order.print_cost ?? ''}
+              placeholder={order.print_cost_auto != null ? `אוטומטי: ${order.print_cost_auto}` : 'ריק = לפי עמודים'}
+              onChange={(e) => set('print_cost', e.target.value)}
+            />
+          </label>
+          <label>עלות משלוח עליי (לפני מע"מ)
+            <input type="number" value={order.shipping_cost ?? ''} onChange={(e) => set('shipping_cost', e.target.value)} />
+          </label>
+          <label>משלוח
+            <select value={order.delivery || ''} onChange={(e) => set('delivery', e.target.value || null)}>
+              <option value="">לא צוין</option>
+              {Object.entries(DELIVERY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </label>
+          <label>איפה שולם
+            <input type="text" value={order.paid_via} onChange={(e) => set('paid_via', e.target.value)} />
+          </label>
+          <label>מצב מיוחד
+            <select value={order.flag || ''} onChange={(e) => set('flag', e.target.value || null)}>
+              <option value="">אין</option>
+              {Object.entries(FLAGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </label>
+          <label>הזמנה בוויקס
+            <input type="text" value={order.wix_order_number || ''} onChange={(e) => set('wix_order_number', e.target.value || null)} />
+          </label>
+          <label>הזמנה בדיפרינט
+            <input type="text" value={order.diprint_order_number || ''} onChange={(e) => set('diprint_order_number', e.target.value || null)} />
+          </label>
+          <label className="check"><input type="checkbox" checked={order.receipt} onChange={(e) => set('receipt', e.target.checked)} /> קבלה הוצאה</label>
+          <label className="check"><input type="checkbox" checked={order.print_paid} onChange={(e) => set('print_paid', e.target.checked)} /> שולם לדפוס</label>
+          <label className="wide">תיקייה בדרייב
+            <input type="url" value={order.drive_folder_url} onChange={(e) => set('drive_folder_url', e.target.value)} placeholder="https://drive.google.com/..." />
+          </label>
+          <label className="wide">כתובת משלוח
+            <input type="text" value={order.address} onChange={(e) => set('address', e.target.value)} />
+          </label>
+        </div>
+        <div className="muted" style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <span>{order.legacy_ref ? `יובאה מהשיטס (${order.legacy_ref.replace('!', ' שורה ')})` : ''}</span>
+          <button className="btn btn-danger btn-sm" onClick={remove}>מחיקת הזמנה</button>
+        </div>
+      </details>
     </details>
   )
 }
@@ -253,8 +268,7 @@ function MergeBox({ client, onMerged }) {
   }
 
   return (
-    <div className="card" style={{ marginTop: 16 }}>
-      <h3>איחוד כפילויות</h3>
+    <div style={{ marginTop: 12 }}>
       <p className="muted" style={{ marginTop: 0 }}>אותה לקוחה מופיעה פעמיים? חפשי ואחדי לתוך התיק הזה.</p>
       <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש לפי שם" style={{ width: '100%' }} />
       {results.map((r) => (
@@ -392,7 +406,7 @@ export default function ClientFile() {
 
         <div>
           <div className="card">
-            <h3>פרטים <SaveState state={clientSaveState} /></h3>
+            <h3>פרטי קשר <SaveState state={clientSaveState} /></h3>
             <div className="fields" style={{ gridTemplateColumns: '1fr' }}>
               <label>טלפון<input type="tel" value={client.phone} onChange={(e) => setField('phone', e.target.value)} /></label>
               <label>מייל<input type="email" value={client.email} onChange={(e) => setField('email', e.target.value)} /></label>
@@ -429,9 +443,11 @@ export default function ClientFile() {
             {openOrders.length === 0 && events.length === 0 && <p className="muted">עוד אין אירועים.</p>}
           </div>
 
-          <MergeBox client={client} onMerged={load} />
-
-          <button className="btn btn-danger btn-sm" style={{ marginTop: 16 }} onClick={removeClient}>מחיקת לקוחה</button>
+          <details className="card more" style={{ marginTop: 16 }}>
+            <summary>כלים: איחוד כפילויות, מחיקה</summary>
+            <MergeBox client={client} onMerged={load} />
+            <button className="btn btn-danger btn-sm" style={{ marginTop: 12 }} onClick={removeClient}>מחיקת לקוחה</button>
+          </details>
         </div>
       </div>
     </CrmLayout>

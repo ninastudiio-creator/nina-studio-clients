@@ -508,3 +508,73 @@
 @media (max-width: 900px) {
   .today-card { height: 320px; }
 }
+
+/* Client file: money row + folded details */
+.money-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  background: #faf8f4;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.money-row label,
+.money-row .stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  min-width: 0;
+}
+
+.money-row input {
+  width: 100%;
+}
+
+.money-row .stat b {
+  font-size: 1.05rem;
+  color: var(--color-navy);
+  padding: 0.35em 0;
+}
+
+.money-row .stat small {
+  font-size: 0.7rem;
+  margin-top: -6px;
+}
+
+.money-row .stat.profit b {
+  color: var(--done);
+}
+
+details.more {
+  margin-top: 14px;
+  border-top: 1px solid #f0ece4;
+  padding-top: 10px;
+}
+
+details.more > summary {
+  cursor: pointer;
+  color: var(--color-blue);
+  font-size: 0.9rem;
+  list-style: none;
+}
+
+details.more > summary::before {
+  content: '▸ ';
+}
+
+details.more[open] > summary::before {
+  content: '▾ ';
+}
+
+details.card.more {
+  border-top: 0;
+  padding-top: 1.2em;
+}
+
+@media (max-width: 700px) {
+  .money-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .money-row .stat.profit { grid-column: 1 / -1; }
+}
