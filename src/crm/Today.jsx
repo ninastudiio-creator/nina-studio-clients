@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import CrmLayout from './CrmLayout'
-import { ORDER_FIELDS, shortDate, stageSinceText, daysSince, daysText, isLate, productText, stageOf, useStages } from './lib'
+import { ORDER_FIELDS, PRODUCTS_SHORT, stageSinceText, daysSince, daysText, isLate, stageOf, useStages } from './lib'
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
@@ -20,9 +20,7 @@ function OrderRow({ order, stages, showStage = true }) {
       <div>
         <div className="name">{order.clients?.name}</div>
         <div className="muted">
-          {showStage && `${stageOf(stages, order.stage)?.label} · `}
-          {productText(order)}
-          {order.ordered_at && ` · הוזמן ${shortDate(order.ordered_at)}`}
+          {[PRODUCTS_SHORT[order.product], showStage && stageOf(stages, order.stage)?.label].filter(Boolean).join(' · ')}
         </div>
       </div>
       <div className={`days ${late ? 'late' : ''}`}>{stageSinceText(order)}</div>

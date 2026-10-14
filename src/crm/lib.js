@@ -9,6 +9,15 @@ export const PRODUCTS = {
   other: 'אחר',
 }
 
+// Short names for compact lists.
+export const PRODUCTS_SHORT = {
+  personal_classic: 'אלבום בעיצוב אישי',
+  personal_premium: 'עיצוב אישי פרימיום',
+  wedding: 'אלבום חתונה',
+  template: 'טמפלט',
+  other: 'אחר',
+}
+
 export const OWNERS = {
   client: 'אצל הלקוחה',
   me: 'אצלך',
