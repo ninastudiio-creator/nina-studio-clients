@@ -78,6 +78,8 @@ export default function Today() {
   // Moving along at the client / printer, within the normal time.
   const elsewhere = open.filter((o) => ['client', 'neutral'].includes(owner(o)))
   const inProgress = elsewhere.filter((o) => !isLate(stages, o)).sort(byAge)
+  const atClient = inProgress.filter((o) => owner(o) === 'client')
+  const atPrinter = inProgress.filter((o) => owner(o) === 'neutral')
   const late = elsewhere.filter((o) => isLate(stages, o)).sort(byAge)
   const LEAD_LATE = { new: 1, talking: 5, offer_sent: 4 }
   const followUps = leads.filter((l) => daysSince(l.last_contact_at || l.stage_since) > LEAD_LATE[l.stage])
@@ -97,20 +99,25 @@ export default function Today() {
         <>
           <div className="kpis">
             <div className="kpi"><b>{mine.length}</b><span>מחכות לך</span></div>
-            <div className="kpi"><b>{inProgress.length}</b><span>אצל הלקוחה ובדפוס</span></div>
+            <div className="kpi"><b>{atClient.length}</b><span>אצל הלקוחה</span></div>
+            <div className="kpi"><b>{atPrinter.length}</b><span>בדפוס ובמשלוח</span></div>
             <div className="kpi"><b>{late.length + onHold.length}</b><span>כדאי לבדוק</span></div>
-            <div className="kpi"><b>{orders.length}</b><span>הזמנות פתוחות</span></div>
           </div>
 
           <div className="today-grid today-main">
-            <TodayCard accent="me" title={`🔵 משימות שמחכות לך (${mine.length})`}>
+            <TodayCard accent="me" title={`🔵 משימות אצלי (${mine.length})`}>
               {mine.length === 0 && <p className="muted">אין כלום. כל הכבוד 🎉</p>}
               {mine.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
             </TodayCard>
 
-            <TodayCard accent="client" title={`🟡 אצל הלקוחה ובדפוס (${inProgress.length})`}>
-              {inProgress.length === 0 && <p className="muted">אין כרגע.</p>}
-              {inProgress.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+            <TodayCard accent="client" title={`🟡 משימות אצל הלקוחה (${atClient.length})`}>
+              {atClient.length === 0 && <p className="muted">אין כרגע.</p>}
+              {atClient.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+            </TodayCard>
+
+            <TodayCard accent="neutral" title={`🖨️ בדפוס ובמשלוח (${atPrinter.length})`}>
+              {atPrinter.length === 0 && <p className="muted">אין כרגע.</p>}
+              {atPrinter.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
             </TodayCard>
           </div>
 
