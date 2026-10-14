@@ -108,8 +108,12 @@ export function shortDate(d) {
   return `${date.getDate()}.${date.getMonth() + 1}${sameYear ? '' : `.${String(date.getFullYear()).slice(2)}`}`
 }
 
-// "מ-5.10 · 9 ימים": a real date, so a stage set today by a bulk cleanup doesn't just read "today".
+// When the order entered its stage: "מהיום", "מאתמול", or the date ("5.10").
 export function stageSinceText(order) {
-  const n = daysSince(order.stage_since)
-  return n ? `מ-${shortDate(order.stage_since)} · ${n} ימים` : `מ-${shortDate(order.stage_since)}`
+  if (!order.stage_since) return '-'
+  const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diff = Math.round((day(new Date()) - day(new Date(order.stage_since))) / 86400000)
+  if (diff <= 0) return 'מהיום'
+  if (diff === 1) return 'מאתמול'
+  return shortDate(order.stage_since)
 }
