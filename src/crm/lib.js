@@ -108,12 +108,12 @@ export function shortDate(d) {
   return `${date.getDate()}.${date.getMonth() + 1}${sameYear ? '' : `.${String(date.getFullYear()).slice(2)}`}`
 }
 
-// When the order entered its stage: "מהיום", "מאתמול", or the date ("5.10").
+// When the order entered its stage: "היום", "אתמול", or "5.10 (9 ימים)".
 export function stageSinceText(order) {
   if (!order.stage_since) return '-'
   const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
   const diff = Math.round((day(new Date()) - day(new Date(order.stage_since))) / 86400000)
-  if (diff <= 0) return 'מהיום'
-  if (diff === 1) return 'מאתמול'
-  return shortDate(order.stage_since)
+  if (diff <= 0) return 'היום'
+  if (diff === 1) return 'אתמול'
+  return `${shortDate(order.stage_since)} (${diff === 2 ? 'יומיים' : `${diff} ימים`})`
 }
