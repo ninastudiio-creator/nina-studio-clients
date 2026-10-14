@@ -6,6 +6,22 @@ import {
   FLAGS, ORDER_FIELDS, stageSinceText, OWNERS, PRODUCTS, isLate, money, productText, stageOf, stagesFor, useStages,
 } from './lib'
 
+const OWNER_ORDER = { me: 0, client: 1, neutral: 2, done: 3 }
+
+// Click a column header to sort by it; click again to flip the direction.
+function SortTh({ label, k, sort, setSort }) {
+  const active = sort.key === k
+  return (
+    <th
+      className={`sortable ${active ? 'sorted' : ''}`}
+      onClick={() => setSort(active ? { key: k, dir: -sort.dir } : { key: k, dir: 1 })}
+      title="מיון"
+    >
+      {label} <span className="sort-arrow">{active ? (sort.dir === 1 ? '▲' : '▼') : '↕'}</span>
+    </th>
+  )
+}
+
 export default function Orders() {
   const stages = useStages()
   const navigate = useNavigate()
@@ -21,6 +37,7 @@ export default function Orders() {
   const mode = params.get('mode') || 'table'
   const showClosed = params.get('closed') === '1'
   const [query, setQuery] = useState('')
+  const [sort, setSort] = useState({ key: 'ordered_at', dir: -1 })
 
   function setParam(key, value) {
     const next = new URLSearchParams(params)
@@ -44,14 +61,30 @@ export default function Orders() {
   const list = useMemo(() => {
     if (!orders || !stages) return []
     const qq = query.trim()
-    return orders.filter(
-      (o) =>
-        (owner === 'all' || stageOf(stages, o.stage)?.owner === owner) &&
-        (product === 'all' || o.product === product) &&
-        (!stageFilter || o.stage === stageFilter) &&
-        (!qq || o.clients?.name?.includes(qq) || (o.clients?.phone || '').includes(qq) || o.notes.includes(qq))
-    )
-  }, [orders, stages, owner, product, stageFilter, query])
+    const value = {
+      name: (o) => o.clients?.name || '',
+      product: (o) => PRODUCTS[o.product] || '',
+      stage: (o) => stageOf(stages, o.stage)?.position ?? 999,
+      owner: (o) => OWNER_ORDER[stageOf(stages, o.stage)?.owner] ?? 9,
+      stage_since: (o) => o.stage_since || '',
+      ordered_at: (o) => o.ordered_at || '',
+      price: (o) => (o.price == null ? -Infinity : Number(o.price)),
+      profit: (o) => (o.profit == null ? -Infinity : Number(o.profit)),
+    }[sort.key]
+    const cmp = (a, b) => {
+      const x = value(a), y = value(b)
+      return (typeof x === 'string' ? x.localeCompare(y, 'he') : x - y) * sort.dir
+    }
+    return orders
+      .filter(
+        (o) =>
+          (owner === 'all' || stageOf(stages, o.stage)?.owner === owner) &&
+          (product === 'all' || o.product === product) &&
+          (!stageFilter || o.stage === stageFilter) &&
+          (!qq || o.clients?.name?.includes(qq) || (o.clients?.phone || '').includes(qq) || o.notes.includes(qq))
+      )
+      .sort(cmp)
+  }, [orders, stages, owner, product, stageFilter, query, sort])
 
   async function changeStage(order, stage) {
     setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, stage, stage_since: new Date().toISOString() } : o)))
@@ -154,7 +187,9 @@ export default function Orders() {
                     onChange={(e) => setSelected(new Set(e.target.checked ? list.map((o) => o.id) : []))}
                   />
                 </th>
-                <th>לקוחה</th><th>מוצר</th><th>שלב</th><th>אצל מי</th><th>בשלב</th><th>הוזמן</th><th>מחיר</th><th>רווח</th>
+                {[['לקוחה', 'name'], ['מוצר', 'product'], ['שלב', 'stage'], ['אצל מי', 'owner'], ['בשלב מאז', 'stage_since'], ['הוזמן', 'ordered_at'], ['מחיר', 'price'], ['רווח', 'profit']].map(([label, k]) => (
+                  <SortTh key={k} label={label} k={k} sort={sort} setSort={setSort} />
+                ))}
               </tr>
             </thead>
             <tbody>

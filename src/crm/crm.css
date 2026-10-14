@@ -663,3 +663,10 @@ details.card.more {
 @media (max-width: 900px) {
   .today-main .today-card { height: 360px; }
 }
+
+/* Sortable table headers */
+.crm th.sortable { user-select: none; }
+.crm th.sortable:hover { color: var(--color-navy); }
+.crm th.sorted { color: var(--color-navy); font-weight: 700; }
+.sort-arrow { font-size: 0.7rem; opacity: 0.45; }
+.crm th.sorted .sort-arrow { opacity: 1; }
