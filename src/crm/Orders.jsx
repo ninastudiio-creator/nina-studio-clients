@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import CrmLayout from './CrmLayout'
 import {
-  FLAGS, ORDER_FIELDS, OWNERS, PRODUCTS, daysSince, daysText, isLate, money, productText, stageOf, stagesFor, useStages,
+  FLAGS, ORDER_FIELDS, stageSinceText, OWNERS, PRODUCTS, isLate, money, productText, stageOf, stagesFor, useStages,
 } from './lib'
 
 export default function Orders() {
@@ -128,7 +128,7 @@ export default function Orders() {
                 {items.map((o) => (
                   <Link key={o.id} to={`/crm/clients/${o.client_id}`} className={`board-tile ${isLate(stages, o) ? 'late' : ''}`}>
                     <div className="name">{o.clients?.name}</div>
-                    <div className="muted">{productText(o)} · {daysText(daysSince(o.stage_since))}</div>
+                    <div className="muted">{productText(o)} · {stageSinceText(o)}</div>
                     {o.flag && <span className="pill flag">{FLAGS[o.flag]}</span>}{' '}
                     {o.needs_review && <span className="pill review">לבדיקה</span>}
                   </Link>
@@ -174,7 +174,7 @@ export default function Orders() {
                       {o.flag && <> <span className="pill flag">{FLAGS[o.flag]}</span></>}
                     </td>
                     <td><span className={`pill ${s?.owner}`}>{OWNERS[s?.owner]}</span></td>
-                    <td className={`days ${isLate(stages, o) ? 'late' : ''}`}>{daysText(daysSince(o.stage_since))}</td>
+                    <td className={`days ${isLate(stages, o) ? 'late' : ''}`}>{stageSinceText(o)}</td>
                     <td>{o.ordered_at ? new Date(o.ordered_at).toLocaleDateString('he-IL') : '-'}</td>
                     <td>{money(o.price)}</td>
                     <td>{o.profit != null ? money(o.profit) : <span className="muted">{o.price == null ? '-' : 'חסרים עמודים'}</span>}</td>

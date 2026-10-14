@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import CrmLayout from './CrmLayout'
 import {
-  DELIVERY, FLAGS, ORDER_FIELDS, OWNERS, PRODUCTS, dateText, daysSince, daysText, isLate, money, nextStage, productText,
-  stageOf, stagesFor, useStages, whatsappHref,
+  DELIVERY, FLAGS, ORDER_FIELDS, OWNERS, PRODUCTS, dateText, isLate, money, nextStage, productText,
+  stageOf, stageSinceText, stagesFor, useStages, whatsappHref,
 } from './lib'
 
 const SAVE_DELAY = 700
@@ -123,7 +123,7 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           {order.flag && <span className="pill flag">{FLAGS[order.flag]}</span>}
           {order.needs_review && <span className="pill review">לבדיקה</span>}
           <span className={`pill ${stage?.owner}`}>{stage?.label}</span>
-          {order.stage !== 'closed' && <span className={`days ${late ? 'late' : ''}`}>{daysText(daysSince(order.stage_since))}</span>}
+          {order.stage !== 'closed' && <span className={`days ${late ? 'late' : ''}`}>{stageSinceText(order)}</span>}
         </div>
       </summary>
 
@@ -241,6 +241,13 @@ function OrderCard({ order: initial, stages, defaultOpen, onChanged }) {
           </label>
           <label>תאריך הזמנה
             <input type="date" value={order.ordered_at || ''} onChange={(e) => set('ordered_at', e.target.value || null)} />
+          </label>
+          <label>בשלב הנוכחי מאז
+            <input
+              type="date"
+              value={order.stage_since ? order.stage_since.slice(0, 10) : ''}
+              onChange={(e) => e.target.value && set('stage_since', new Date(e.target.value).toISOString())}
+            />
           </label>
           <label>משלוח
             <select value={order.delivery || ''} onChange={(e) => set('delivery', e.target.value || null)}>

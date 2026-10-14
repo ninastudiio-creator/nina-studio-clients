@@ -633,3 +633,27 @@ details.card.more {
   .calc-table { grid-template-columns: minmax(0, 1fr) 100px 100px; }
   .calc-table.no-vat { grid-template-columns: minmax(0, 1fr) 100px; }
 }
+
+/* Today: main tasks big on top, "worth a look" smaller below */
+.today-main {
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+}
+
+.today-main .today-card { height: 440px; }
+
+.today-sub {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin: 28px 0 10px;
+}
+
+.today-secondary .today-card { height: 280px; }
+
+.today-group {
+  font-size: 0.75rem;
+  margin: 8px 0 2px;
+}
+
+@media (max-width: 900px) {
+  .today-main .today-card { height: 360px; }
+}

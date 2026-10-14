@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import CrmLayout from './CrmLayout'
-import { ORDER_FIELDS, daysSince, daysText, isLate, productText, stageOf, useStages } from './lib'
+import { ORDER_FIELDS, shortDate, stageSinceText, daysSince, daysText, isLate, productText, stageOf, useStages } from './lib'
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
@@ -22,9 +22,10 @@ function OrderRow({ order, stages, showStage = true }) {
         <div className="muted">
           {showStage && `${stageOf(stages, order.stage)?.label} · `}
           {productText(order)}
+          {order.ordered_at && ` · הוזמן ${shortDate(order.ordered_at)}`}
         </div>
       </div>
-      <div className={`days ${late ? 'late' : ''}`}>{daysText(daysSince(order.stage_since))}</div>
+      <div className={`days ${late ? 'late' : ''}`}>{stageSinceText(order)}</div>
     </Link>
   )
 }
@@ -68,16 +69,20 @@ export default function Today() {
   const owner = (o) => stageOf(stages, o.stage)?.owner
   const byAge = (a, b) => daysSince(b.stage_since) - daysSince(a.stage_since)
 
-  const mine = loading ? [] : orders.filter((o) => owner(o) === 'me' && o.flag !== 'hold').sort(byAge)
-  const waitingPrint = mine.filter((o) => o.stage === 'awaiting_print')
-  const mineOther = mine.filter((o) => o.stage !== 'awaiting_print')
-  const atClient = loading ? [] : orders.filter((o) => owner(o) === 'client')
-  const stuckAtClient = atClient.filter((o) => isLate(stages, o)).sort(byAge)
-  const printing = loading ? [] : orders.filter((o) => o.stage === 'printing' || o.stage === 'shipping')
-  const stuckPrinting = printing.filter((o) => isLate(stages, o)).sort(byAge)
+  const open = loading ? [] : orders.filter((o) => o.flag !== 'hold')
+  const onHold = loading ? [] : orders.filter((o) => o.flag === 'hold').sort(byAge)
+  // Waiting on Hagar: approved albums to send to print first, then the oldest.
+  const mine = open
+    .filter((o) => owner(o) === 'me')
+    .sort((a, b) => (b.stage === 'awaiting_print') - (a.stage === 'awaiting_print') || byAge(a, b))
+  // Moving along at the client / printer, within the normal time.
+  const elsewhere = open.filter((o) => ['client', 'neutral'].includes(owner(o)))
+  const inProgress = elsewhere.filter((o) => !isLate(stages, o)).sort(byAge)
+  const late = elsewhere.filter((o) => isLate(stages, o)).sort(byAge)
   const LEAD_LATE = { new: 1, talking: 5, offer_sent: 4 }
   const followUps = leads.filter((l) => daysSince(l.last_contact_at || l.stage_since) > LEAD_LATE[l.stage])
   const recent = loading ? [] : orders.filter((o) => daysSince(o.created_at) <= 2 && !o.legacy_ref)
+  const toCheck = late.length + onHold.length + followUps.length + (reviewCount > 0 ? 1 : 0)
 
   return (
     <CrmLayout>
@@ -92,27 +97,41 @@ export default function Today() {
         <>
           <div className="kpis">
             <div className="kpi"><b>{mine.length}</b><span>מחכות לך</span></div>
-            <div className="kpi"><b>{atClient.length}</b><span>אצל לקוחות</span></div>
-            <div className="kpi"><b>{printing.length}</b><span>בדפוס ובמשלוח</span></div>
+            <div className="kpi"><b>{inProgress.length}</b><span>אצל הלקוחה ובדפוס</span></div>
+            <div className="kpi"><b>{late.length + onHold.length}</b><span>כדאי לבדוק</span></div>
             <div className="kpi"><b>{orders.length}</b><span>הזמנות פתוחות</span></div>
           </div>
 
-          <div className="today-grid">
-            {waitingPrint.length > 0 && (
-              <TodayCard accent="me" title={`🖨️ מאושרות, מחכות שתשלחי לדפוס (${waitingPrint.length})`}>
-                {waitingPrint.map((o) => <OrderRow key={o.id} order={o} stages={stages} showStage={false} />)}
+          <div className="today-grid today-main">
+            <TodayCard accent="me" title={`🔵 משימות שמחכות לך (${mine.length})`}>
+              {mine.length === 0 && <p className="muted">אין כלום. כל הכבוד 🎉</p>}
+              {mine.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+            </TodayCard>
+
+            <TodayCard accent="client" title={`🟡 אצל הלקוחה ובדפוס (${inProgress.length})`}>
+              {inProgress.length === 0 && <p className="muted">אין כרגע.</p>}
+              {inProgress.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+            </TodayCard>
+          </div>
+
+          {(toCheck > 0 || recent.length > 0) && <h2 className="today-sub">כדאי להציץ</h2>}
+          <div className="today-grid today-secondary">
+            {(late.length > 0 || onHold.length > 0 || reviewCount > 0) && (
+              <TodayCard accent="alert" title={`⚠️ כדאי לבדוק (${late.length + onHold.length})`}>
+                {late.length > 0 && <div className="muted today-group">עברו יותר זמן מהרגיל</div>}
+                {late.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+                {onHold.length > 0 && <div className="muted today-group">בהולד</div>}
+                {onHold.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+                {reviewCount > 0 && (
+                  <Link to="/crm/review" className="list-row">
+                    <div>
+                      <div className="name">{reviewCount} הזמנות מהשיטס לבדיקה</div>
+                      <div className="muted">כפילויות, החזרים, מוצר חסר</div>
+                    </div>
+                  </Link>
+                )}
               </TodayCard>
             )}
-
-            <TodayCard accent="me" title={`🔵 מחכה לך (${mineOther.length})`}>
-              {mineOther.length === 0 && <p className="muted">אין כלום. כל הכבוד 🎉</p>}
-              {mineOther.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
-            </TodayCard>
-
-            <TodayCard accent="client" title={`🟡 נתקעו אצל הלקוחה (${stuckAtClient.length})`}>
-              {stuckAtClient.length === 0 && <p className="muted">אף אחת לא נתקעה.</p>}
-              {stuckAtClient.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
-            </TodayCard>
 
             {followUps.length > 0 && (
               <TodayCard accent="client" title={`💬 לידים שמחכים לפולואפ (${followUps.length})`}>
@@ -122,27 +141,6 @@ export default function Today() {
                     <div className="days late">{daysText(daysSince(l.last_contact_at || l.stage_since))}</div>
                   </Link>
                 ))}
-              </TodayCard>
-            )}
-
-            {(stuckPrinting.length > 0 || reviewCount > 0) && (
-              <TodayCard accent="alert" title="⚠️ כדאי לבדוק">
-                {stuckPrinting.length > 0 && (
-                  <Link to="/crm/orders?stage=printing" className="list-row">
-                    <div>
-                      <div className="name">{stuckPrinting.length} הזמנות בדפוס מעל שבועיים</div>
-                      <div className="muted">אם כבר הגיעו, אפשר לסגור אותן ביחד ממסך ההזמנות</div>
-                    </div>
-                  </Link>
-                )}
-                {reviewCount > 0 && (
-                  <Link to="/crm/review" className="list-row">
-                    <div>
-                      <div className="name">{reviewCount} הזמנות מהשיטס לבדיקה</div>
-                      <div className="muted">בלי סטטוס, כפילויות, החזרים</div>
-                    </div>
-                  </Link>
-                )}
               </TodayCard>
             )}
 

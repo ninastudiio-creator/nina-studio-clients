@@ -99,3 +99,17 @@ export function productText(order) {
 export async function setOrderStage(orderId, stage) {
   return supabase.from('orders').update({ stage }).eq('id', orderId)
 }
+
+// "14.10" (adds the year only when it isn't this year)
+export function shortDate(d) {
+  if (!d) return '-'
+  const date = new Date(d)
+  const sameYear = date.getFullYear() === new Date().getFullYear()
+  return `${date.getDate()}.${date.getMonth() + 1}${sameYear ? '' : `.${String(date.getFullYear()).slice(2)}`}`
+}
+
+// "מ-5.10 · 9 ימים": a real date, so a stage set today by a bulk cleanup doesn't just read "today".
+export function stageSinceText(order) {
+  const n = daysSince(order.stage_since)
+  return n ? `מ-${shortDate(order.stage_since)} · ${n} ימים` : `מ-${shortDate(order.stage_since)}`
+}
