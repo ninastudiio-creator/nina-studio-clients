@@ -86,6 +86,57 @@ const Swatch = ({ color }) => (
   <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 3, background: color, marginLeft: 6, verticalAlign: 'middle' }} />
 )
 
+const PURPOSES = { chat: 'שיחות בטלגרם', diprint_extract: 'קריאת מיילים מדיפרינט', other: 'אחר' }
+const usd = (n) => `$${Number(n || 0).toFixed(2)}`
+
+// This month's Claude API cost for the agent (estimates logged by the agent itself).
+function ClaudeCost() {
+  const [rows, setRows] = useState(null)
+
+  useEffect(() => {
+    const now = new Date()
+    const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    supabase.from('claude_usage_daily').select('*').gte('day', first).then(({ data }) => setRows(data || []))
+  }, [])
+
+  if (!rows) return null
+  const now = new Date()
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const total = rows.reduce((s, r) => s + Number(r.cost_usd), 0)
+  const projection = (total / now.getDate()) * daysInMonth
+  const byPurpose = Object.entries(
+    rows.reduce((acc, r) => ({ ...acc, [r.purpose]: (acc[r.purpose] || 0) + Number(r.cost_usd) }), {})
+  ).sort((a, b) => b[1] - a[1])
+  const today = rows.filter((r) => r.day === now.toISOString().slice(0, 10)).reduce((s, r) => s + Number(r.cost_usd), 0)
+
+  return (
+    <div className="card" style={{ marginTop: 16 }}>
+      <h3>🤖 עלות Claude החודש (הערכה)</h3>
+      {rows.length === 0 ? (
+        <p className="muted">עוד אין נתונים החודש.</p>
+      ) : (
+        <>
+          <div className="kpis" style={{ marginBottom: 8 }}>
+            <div className="kpi"><b>{usd(total)}</b><span>עד היום</span></div>
+            <div className="kpi"><b>{usd(projection)}</b><span>תחזית לסוף החודש</span></div>
+            <div className="kpi"><b>{usd(today)}</b><span>היום</span></div>
+          </div>
+          <table>
+            <tbody>
+              {byPurpose.map(([k, v]) => (
+                <tr key={k}><td>{PURPOSES[k] || k}</td><td>{usd(v)}</td><td className="muted">{Math.round((v / (total || 1)) * 100)}%</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="muted" style={{ margin: '8px 0 0' }}>
+            הבוט מתריע בטלגרם אם התחזית עוברת $6 או אם יום עולה מעל $0.50. היתרה האמיתית נמצאת ב-console.anthropic.com.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function Data() {
   const [orders, setOrders] = useState(null)
   const [year, setYear] = useState(new Date().getFullYear())
@@ -253,6 +304,7 @@ export default function Data() {
               ))}
             </div>
           </div>
+          <ClaudeCost />
         </>
       )}
     </CrmLayout>
