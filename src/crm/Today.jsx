@@ -13,12 +13,15 @@ function greeting() {
   return 'ערב טוב'
 }
 
-function OrderRow({ order, stages, showStage = true }) {
+function OrderRow({ order, stages, showStage = true, showTopic = false }) {
   const late = isLate(stages, order)
   return (
     <Link to={`/crm/clients/${order.client_id}`} className="list-row">
       <div>
-        <div className="name">{order.clients?.name}</div>
+        <div className="name">
+          {order.clients?.name}
+          {showTopic && order.topic && <span className="muted"> · {order.topic}</span>}
+        </div>
         <div className="muted">
           {[PRODUCTS_SHORT[order.product], showStage && stageOf(stages, order.stage)?.label].filter(Boolean).join(' · ')}
         </div>
@@ -67,6 +70,10 @@ export default function Today() {
   const owner = (o) => stageOf(stages, o.stage)?.owner
   const byAge = (a, b) => daysSince(b.stage_since) - daysSince(a.stage_since)
 
+  // A client with several open orders gets the project name next to her name, to tell them apart.
+  const countByClient = {}
+  if (!loading) orders.forEach((o) => (countByClient[o.client_id] = (countByClient[o.client_id] || 0) + 1))
+  const multi = new Set(Object.keys(countByClient).filter((k) => countByClient[k] > 1))
   const open = loading ? [] : orders.filter((o) => o.flag !== 'hold')
   const onHold = loading ? [] : orders.filter((o) => o.flag === 'hold').sort(byAge)
   // Waiting on Hagar: approved albums to send to print first, then the oldest.
@@ -105,17 +112,17 @@ export default function Today() {
           <div className="today-grid today-main">
             <TodayCard accent="me" title={`🔵 משימות אצלי (${mine.length})`}>
               {mine.length === 0 && <p className="muted">אין כלום. כל הכבוד 🎉</p>}
-              {mine.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+              {mine.map((o) => <OrderRow key={o.id} order={o} stages={stages} showTopic={multi.has(o.client_id)} />)}
             </TodayCard>
 
             <TodayCard accent="client" title={`🟡 משימות אצל הלקוחה (${atClient.length})`}>
               {atClient.length === 0 && <p className="muted">אין כרגע.</p>}
-              {atClient.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+              {atClient.map((o) => <OrderRow key={o.id} order={o} stages={stages} showTopic={multi.has(o.client_id)} />)}
             </TodayCard>
 
             <TodayCard accent="neutral" title={`🖨️ בדפוס ובמשלוח (${atPrinter.length})`}>
               {atPrinter.length === 0 && <p className="muted">אין כרגע.</p>}
-              {atPrinter.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+              {atPrinter.map((o) => <OrderRow key={o.id} order={o} stages={stages} showTopic={multi.has(o.client_id)} />)}
             </TodayCard>
           </div>
 
@@ -124,9 +131,9 @@ export default function Today() {
             {(late.length > 0 || onHold.length > 0 || reviewCount > 0) && (
               <TodayCard accent="alert" title={`⚠️ כדאי לבדוק (${late.length + onHold.length})`}>
                 {late.length > 0 && <div className="muted today-group">עברו יותר זמן מהרגיל</div>}
-                {late.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+                {late.map((o) => <OrderRow key={o.id} order={o} stages={stages} showTopic={multi.has(o.client_id)} />)}
                 {onHold.length > 0 && <div className="muted today-group">בהולד</div>}
-                {onHold.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+                {onHold.map((o) => <OrderRow key={o.id} order={o} stages={stages} showTopic={multi.has(o.client_id)} />)}
                 {reviewCount > 0 && (
                   <Link to="/crm/review" className="list-row">
                     <div>
@@ -151,7 +158,7 @@ export default function Today() {
 
             {recent.length > 0 && (
               <TodayCard accent="done" title={`🆕 נכנסו ביומיים האחרונים (${recent.length})`}>
-                {recent.map((o) => <OrderRow key={o.id} order={o} stages={stages} />)}
+                {recent.map((o) => <OrderRow key={o.id} order={o} stages={stages} showTopic={multi.has(o.client_id)} />)}
               </TodayCard>
             )}
           </div>
